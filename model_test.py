@@ -34,7 +34,6 @@ class ModelTests(unittest.TestCase):
     plot(x, y, best['f'])
     plt.savefig('temp.png') # for the readme
     self.assertGreater(best['corr'], .99)
-    self.assertTrue(best['is_monotonic'])
 
 if __name__ == '__main__':
   unittest.main()

@@ -11,7 +11,7 @@ def is_monotonic(xmin, xmax, f, bins=20, increase=True):
     chg = sum([f(x[i]) <= f(x[i - 1]) for i in range(1, len(x))])
   return chg == len(x) - 1
 
-def find_model(x, y, maxdegree=10, method='poly', bins=20, increase=True, k=3):
+def find_model(x, y, maxdegree=10, method='poly', bins=20, increase=True):
   """
     Args:
       x: univariate array
@@ -20,28 +20,29 @@ def find_model(x, y, maxdegree=10, method='poly', bins=20, increase=True, k=3):
       method: poly or spline
       bins: number of bins for monotonic check
       increase: boolean, has x positive effect
-      k: degree for spline
   """
 
   assert method in ['poly', 'spline']
   xmin, xmax = x.min(), x.max()
+  best = {'corr': -1}
   if method == 'poly':
-    best = {'corr': -1}
-    for deg in range(1, maxdegree + 1):
-      params = np.polyfit(x, y, deg)
+    for k in range(1, maxdegree + 1):
+      params = np.polyfit(x, y, k)
       f = np.poly1d(params)
       corr = np.corrcoef(y, f(x))[0, 1]
       is_mon = is_monotonic(xmin, xmax, f, bins=bins, increase=increase)
       if corr > best['corr'] and is_mon:
-        best = {'degree': deg, 'f': f, 'corr': corr}
+        best = {'degree': k, 'f': f, 'corr': corr}
   else:
     # sort (x, y) by x
     x2 = x[np.argsort(x)]
     y2 = y[np.argsort(x)]
-    f = interpolate.UnivariateSpline(x2, y2, k=3)
-    corr = np.corrcoef(y, f(x))[0, 1]
-    best = {'degree': k, 'f': f, 'corr': corr, 'is_monotonic': 
-      is_monotonic(xmin, xmax, f, bins=bins, increase=increase)}
+    for k in range(1, 6):
+      f = interpolate.UnivariateSpline(x2, y2, k=k)
+      corr = np.corrcoef(y, f(x))[0, 1]
+      is_mon = is_monotonic(xmin, xmax, f, bins=bins, increase=increase)
+      if corr > best['corr'] and is_mon:
+        best = {'degree': k, 'f': f, 'corr': corr}
   return best
 
 def plot(x, y, f):
